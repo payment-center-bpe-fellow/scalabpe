@@ -1555,11 +1555,11 @@ application/x-gzip gz
             if (log.isDebugEnabled) {
                 log.debug("http post content: " + contentStr + ", headers: " + toHeaders(httpReq))
             }
-            if (contentType == MIMETYPE_FORM) {
+
+            if (pluginObj != null && pluginObj.isInstanceOf[HttpServerRequestParsePlugin]) {
+                pluginObj.asInstanceOf[HttpServerRequestParsePlugin].parseContent(serviceId, msgId, charset, contentType, contentStr, map)
+            } else if (contentType == MIMETYPE_FORM) {
                 parseFormContent(charset, contentStr, map)
-            } else {
-                if (pluginObj != null && pluginObj.isInstanceOf[HttpServerRequestParsePlugin])
-                    pluginObj.asInstanceOf[HttpServerRequestParsePlugin].parseContent(serviceId, msgId, charset, contentType, contentStr, map)
             }
         }
 
