@@ -91,6 +91,8 @@ object HttpMsgDefine {
     val MIMETYPE_HTML = "text/html"
     val MIMETYPE_PLAIN = "text/plain"
 
+    val MIMETYPE_MULTIPART = "multipart/form-data"
+
     def parseMethod(s: String): Int = {
         s match {
             case "GET" | "get"       => GET
@@ -399,7 +401,7 @@ class HttpClientImpl(
                 if (ahtCfg != null && ahtCfg.pluginObj != null) pluginObj = ahtCfg.pluginObj
                 if (pluginObj == null && defaultAhtCfg != null && defaultAhtCfg.pluginObj != null) pluginObj = defaultAhtCfg.pluginObj
 
-                var parseContentOnErrorStr = "false"
+                var parseContentOnErrorStr = ""
                 if (ahtCfg != null && ahtCfg.parseContentOnError != "") parseContentOnErrorStr = ahtCfg.parseContentOnError
                 if (parseContentOnErrorStr == "" && defaultAhtCfg != null && defaultAhtCfg.parseContentOnError != "") parseContentOnErrorStr = defaultAhtCfg.parseContentOnError
                 if (parseContentOnErrorStr == "") parseContentOnErrorStr = "false"
@@ -743,6 +745,11 @@ class HttpClientImpl(
 
         var body: String = null
 
+        val boundary = java.util.UUID.randomUUID().toString().replaceAll("-", "")
+        if (msg.requestContentType == HttpMsgDefine.MIMETYPE_MULTIPART) {
+            reqBody.put("boundary", boundary)
+        }
+
         if (msg.pluginObj != null && msg.pluginObj.isInstanceOf[HttpRequestPlugin]) {
             val reqPlugin = msg.pluginObj.asInstanceOf[HttpRequestPlugin]
             body = reqPlugin.generateRequestBody(msg, reqBody)
@@ -751,7 +758,7 @@ class HttpClientImpl(
             body = generateRequestBody(msg, reqBody)
         }
 
-        var bodyBytes: Array[Byte] = null
+        var bodyBytes: Array[Byte] = null  
 
         if (msg.pluginObj != null && msg.pluginObj.isInstanceOf[RawHttpRequestPlugin]) {
             val reqPlugin = msg.pluginObj.asInstanceOf[RawHttpRequestPlugin]
@@ -829,7 +836,12 @@ class HttpClientImpl(
                 httpReq.setContent(buffer);
                 httpReq.setHeader("Host", host) // the host include port already
                 for ((key, value) <- headers) httpReq.setHeader(key, value)
-                httpReq.setHeader("Content-Type", msg.requestContentType + "; charset=" + msg.charSet)
+                if (msg.requestContentType == HttpMsgDefine.MIMETYPE_MULTIPART) {
+                    httpReq.setHeader("Content-Type", msg.requestContentType + "; boundary=" + boundary)
+                } else {
+                    httpReq.setHeader("Content-Type", msg.requestContentType + "; charset=" + msg.charSet)
+                }
+                
                 httpReq.setHeader("Content-Length", httpReq.getContent().writerIndex)
                 httpReq.setHeader("User-Agent", "scalabpe aht plugin")
 
