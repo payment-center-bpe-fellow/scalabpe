@@ -766,7 +766,7 @@ object TypeSafe {
                 return ad
             case aa: ArrayBuffer[_] =>
                 val ad = new ArrayBufferDouble()
-                for (a <- aa) ad += anyToLong(a)
+                for (a <- aa) ad += anyToDouble(a)
                 return ad
             case _ =>
                 throw new RuntimeException("wrong data type, name=" + name)
