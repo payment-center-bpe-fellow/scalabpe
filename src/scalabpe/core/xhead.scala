@@ -24,7 +24,7 @@ object Xhead {
     val CODE_UNIQUE_ID = 9
     val CODE_SPS_ID = 11
     val CODE_HTTP_TYPE = 12
-    val CODE_BUSINESS_TYPE = 14
+    val CODE_BUSINESS_TYPE = 16
 
     val KEY_FIRST_ADDR = "firstAddr"
     val KEY_LAST_ADDR = "lastAddr"
@@ -48,7 +48,7 @@ object Xhead {
         add(CODE_SPS_ID, KEY_SPS_ID, "string") // 11 
         add(CODE_HTTP_TYPE, KEY_HTTP_TYPE, "int") // 12
         add(13, "logId", "string")
-        add(CODE_BUSINESS_TYPE,KEY_BUSINESS_TYPE,"string")// 13 业务类型
+        add(CODE_BUSINESS_TYPE,KEY_BUSINESS_TYPE,"string")// 16 业务类型
     }
 
     def add(code: Int, name: String, tp: String) {

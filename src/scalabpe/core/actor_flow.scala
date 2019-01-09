@@ -1,15 +1,9 @@
 package scalabpe.core
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 case class FlowCallTimeout(requestId: String)
 case class FlowTimeout(requestId: String)
@@ -671,6 +665,12 @@ abstract class Flow extends Logging {
 
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,"")
+        if (!("").equals(uniqueId)){
+            req.xhead.put(Xhead.KEY_UNIQUE_ID,req.requestId)
+        }else{
+            req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
+        }
 
         var i = 0
         while (i < infos.size) {
@@ -732,6 +732,14 @@ abstract class Flow extends Logging {
             val s = info.params.s("head.encoding")
             if (s != null && s != "")
                 encoding = AvenueCodec.parseEncoding(s)
+        }
+
+
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,"")
+        if (!("").equals(uniqueId)){
+            req.xhead.put(Xhead.KEY_UNIQUE_ID,req.requestId)
+        }else{
+            req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
         }
 
         val newreq = new Request(
