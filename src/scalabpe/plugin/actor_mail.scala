@@ -1,33 +1,14 @@
 package scalabpe.plugin
 
 import java.security.Security
-import java.util.Properties
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent._
+import java.util.{Base64, Properties}
+
+import javax.mail._
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import scalabpe.core._
 
 import scala.xml.Node
-
-import javax.mail.Authenticator
-import javax.mail.Message
-import javax.mail.PasswordAuthentication
-import javax.mail.Session
-import javax.mail.Transport
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMessage
-import scalabpe.core.Actor
-import scalabpe.core.Closable
-import scalabpe.core.Dumpable
-import scalabpe.core.HashMapStringAny
-import scalabpe.core.Logging
-import scalabpe.core.NamedThreadFactory
-import scalabpe.core.Request
-import scalabpe.core.RequestResponseInfo
-import scalabpe.core.Response
-import scalabpe.core.ResultCodes
-import scalabpe.core.Router
 
 class MailActor(val router: Router, val cfgNode: Node) extends Actor with Logging with Closable with Dumpable {
 
@@ -199,7 +180,8 @@ class MailActor(val router: Router, val cfgNode: Node) extends Actor with Loggin
                 msg.addRecipients(Message.RecipientType.CC, cc)
             }
 
-            val enc = new sun.misc.BASE64Encoder();
+//            val enc = new sun.misc.BASE64Encoder();
+            val enc = Base64.getEncoder()
             msg.setSubject("=?" + charSet + "?B?" + enc.encode(subject.getBytes(charSet)) + "?=")
 
             msg.setContent(content.toString(), contentType + ";charset=" + charSet)
