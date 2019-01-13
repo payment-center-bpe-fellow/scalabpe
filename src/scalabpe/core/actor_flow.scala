@@ -383,6 +383,16 @@ abstract class Flow extends Logging {
         lock.lock();
 
         try {
+
+            val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+            val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,null)
+            if (uniqueId!=null){
+                req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
+            }
+            if (businessType!=null){
+                req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
+            }
+
             filterRequest(req.body)
 
             baseReceive()
