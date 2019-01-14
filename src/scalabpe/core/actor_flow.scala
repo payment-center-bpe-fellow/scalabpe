@@ -384,13 +384,16 @@ abstract class Flow extends Logging {
 
         try {
 
-            val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
-            val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,null)
-            if (uniqueId!=null){
-                req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
+            val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID, null)
+            val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, null)
+            if (uniqueId != null) {
+                req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+                req.requestId = uniqueId.asInstanceOf[String]
+            } else {
+                req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
             }
-            if (businessType!=null){
-                req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
+            if (businessType != null) {
+                req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
             }
 
             filterRequest(req.body)
@@ -675,11 +678,13 @@ abstract class Flow extends Logging {
 
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
-        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,"")
-        if (!("").equals(uniqueId)){
-            req.xhead.put(Xhead.KEY_UNIQUE_ID,req.requestId)
-        }else{
-            req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,"TestBusinessType")
+        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
+        if (uniqueId == null) {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+        } else {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
         }
 
         var i = 0
@@ -745,11 +750,13 @@ abstract class Flow extends Logging {
         }
 
 
-        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,"")
-        if (!("").equals(uniqueId)){
-            req.xhead.put(Xhead.KEY_UNIQUE_ID,req.requestId)
-        }else{
-            req.xhead.put(Xhead.KEY_UNIQUE_ID,uniqueId)
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID, null)
+        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, "testBusinessType")
+        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
+        if (uniqueId == null) {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+        } else {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
         }
 
         val newreq = new Request(

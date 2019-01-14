@@ -344,7 +344,7 @@ class RawResponse(val data: AvenueData, val connId: String) {
 }
 
 class Request(
-        val requestId: String,
+        var requestId: String,
         val connId: String,
         val sequence: Int,
         val encoding: Int,
