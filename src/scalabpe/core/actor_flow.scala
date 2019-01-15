@@ -679,7 +679,7 @@ abstract class Flow extends Logging {
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
         val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
-        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,"TestBusinessType")
+        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,"DefaultBusinessType")
         req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
         if (uniqueId == null) {
             req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
