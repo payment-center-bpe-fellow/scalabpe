@@ -836,6 +836,12 @@ abstract class Flow extends Logging {
         body
     }
 
+    /**
+      * check if the parameter in the invoke() is a attribute in the extended header
+      * @param xheadSupport default true
+      * @param name parameter in invoke()
+      * @return true: if and only if when the parameter begins with "xhead."
+      */
     private def checkIsXhead(xheadSupport: Boolean, name: String): Tuple2[String, Boolean] = {
         if (xheadSupport && name.startsWith("xhead.")) {
             val t = (name.substring(6), true)
