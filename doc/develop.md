@@ -459,12 +459,12 @@ __flow文件的命名建议用 消息名_消息号.flow 的格式__
 ## 指定扩展包头里的参数
 
     扩展包头的参数会自动继承当前req对象里的扩展包头参数，也可以额外添加或修改参数值
+    
+    在invoke的时候，如果动态参数名是xhead.以开头的参数，则可设置扩展包头的参数，可能会有： 
 
-    在invoke的时候，如果动态参数名是以head.开头的参数，则可设置扩展包头的参数，可能会有： 
-
-    head.encoding 指定发出调用的字符集，utf-8或gbk, 默认为utf-8
-    head.socId  客户端标识
-    head.appId  应用标识
+    xhead.encoding 指定发出调用的字符集，utf-8或gbk, 默认为utf-8
+    xhead.socId  客户端标识
+    xhead.appId  应用标识
 
 ## 获取调用结果
 
