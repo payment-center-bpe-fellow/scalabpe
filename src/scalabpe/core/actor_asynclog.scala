@@ -707,6 +707,8 @@ class AsyncLogActor(val router: Router) extends Actor with Logging with Closable
 
                     buff.append(ts).append(splitter)
                     buff.append(info.res.code)
+                    // BUSINESS_TYPE
+                    buff.append(splitter).append(info.req.xhead.ns(Xhead.KEY_BUSINESS_TYPE));
 
                     log.info(buff.toString)
 
@@ -774,7 +776,8 @@ class AsyncLogActor(val router: Router) extends Actor with Logging with Closable
                     buff.append(splitter)
 
                     buff.append(info.res.code)
-
+                    // BUSINESS_TYPE
+                    buff.append(splitter).append(info.req.xhead.ns(Xhead.KEY_BUSINESS_TYPE));
                     log.info(buff.toString)
                 }
 
