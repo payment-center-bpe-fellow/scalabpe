@@ -248,7 +248,6 @@ class TlvCodec(val configFile: String) extends Logging {
     var serviceOrigName: String = _
     var serviceName: String = _
     var version = 1
-//    var businessType:String = _ //TODO
 
     val msgIds = ArrayBufferInt()
 
@@ -2026,7 +2025,7 @@ class TlvCodecs(val dir: String) extends Logging {
         if (msgId == 0) {
             return (0, 0,null)
         }
-        //TODO
+
         val businessType = codec.msgIdToBusinessType(msgId)
         (codec.serviceId, msgId,businessType)
     }

@@ -3,6 +3,8 @@ import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
+import org.apache.commons.lang3.StringUtils
+
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 case class FlowCallTimeout(requestId: String)
@@ -718,7 +720,7 @@ abstract class Flow extends Logging {
     private def send(info: InvokeInfo, subrequestId: String): InvokeResult = {
 
         //TODO bizType后续处理
-        val (serviceId, msgId,bizType) = Flow.router.serviceNameToId(info.service)
+        val (serviceId, msgId,currentBusinessType) = Flow.router.serviceNameToId(info.service)
 
         if (serviceId == 0) {
             log.error("service not found, service=%s".format(info.service))
@@ -750,10 +752,11 @@ abstract class Flow extends Logging {
         }
 
 
-        //TODO bizType为空从config.xml 中取
-        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, "testBusinessType")
-
-        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,bizType)
+        var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, currentBusinessType)
+        if (StringUtils.isBlank(businessType.asInstanceOf[String])) {
+            businessType = Router.globalBizType
+        }
+        req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
 
 
         val newreq = new Request(

@@ -1859,7 +1859,7 @@ options:
             map ++= res
             map.put(codeTag, code)
         } else if (remote == "") {
-            val (serviceId, msgId) = Flow.router.serviceNameToId(i.service)
+            val (serviceId, msgId,bizType) = Flow.router.serviceNameToId(i.service)
             if (serviceId == 0 || msgId == 0) {
                 val tp = (params, HashMapStringAny("$code" -> (-10242405)))
                 saveInvokeToContext(i.id, tp, context)
@@ -1925,7 +1925,7 @@ options:
             res_body = map
             lock.lock();
             try {
-                val (serviceId, msgId) = codecs.serviceNameToId(i.service)
+                val (serviceId, msgId,bizType) = codecs.serviceNameToId(i.service)
                 if (serviceId == 0 || msgId == 0) {
                     val tp = (params, HashMapStringAny("$code" -> (-10242405)))
                     saveInvokeToContext(i.id, tp, context)
@@ -2143,7 +2143,7 @@ options:
         if (remote != "") return (false, "mock cannot be installed in remote mode")
 
         val service = m.service.toLowerCase
-        val (serviceId, msgId) = Flow.router.serviceNameToId(service)
+        val (serviceId, msgId,bizType) = Flow.router.serviceNameToId(service)
         if (serviceId == 0 || msgId == 0) {
             return (false, "mock failed, service not found")
         }

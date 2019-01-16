@@ -27,6 +27,8 @@ object Router {
     var tempDir = ""
     var testMode = false // 单元测试模式下运行
     var main: Router = null
+
+    var globalBizType:String = _
 }
 
 object FlowTimoutType {
@@ -235,6 +237,7 @@ class Router(val rootDir: String, val startSos: Boolean = true, var mockMode: Bo
         if (new File(rootDir + "/" + configfile).exists()) {
             val in = new InputStreamReader(new FileInputStream(rootDir + "/" + configfile), "UTF-8")
             val pxml = XML.load(in)
+            Router.globalBizType = (pxml  \ "@businessType").toString
             in.close()
 
             loadParameter(pxml, pmap, "assign")
