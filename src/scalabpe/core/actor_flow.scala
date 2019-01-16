@@ -678,9 +678,8 @@ abstract class Flow extends Logging {
 
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
+        //在此设置uniqueId,同一批次的请求requestid都一样
         val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
-        val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE,"DefaultBusinessType")
-        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
         if (uniqueId == null) {
             req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
         } else {
@@ -718,7 +717,8 @@ abstract class Flow extends Logging {
 
     private def send(info: InvokeInfo, subrequestId: String): InvokeResult = {
 
-        val (serviceId, msgId) = Flow.router.serviceNameToId(info.service)
+        //TODO bizType后续处理
+        val (serviceId, msgId,bizType) = Flow.router.serviceNameToId(info.service)
 
         if (serviceId == 0) {
             log.error("service not found, service=%s".format(info.service))
@@ -750,14 +750,11 @@ abstract class Flow extends Logging {
         }
 
 
-        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID, null)
+        //TODO bizType为空从config.xml 中取
         val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, "testBusinessType")
-        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,businessType)
-        if (uniqueId == null) {
-            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
-        } else {
-            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
-        }
+
+        req.xhead.put(Xhead.KEY_BUSINESS_TYPE,bizType)
+
 
         val newreq = new Request(
             subrequestId,

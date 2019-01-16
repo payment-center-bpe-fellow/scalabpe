@@ -910,7 +910,7 @@ class Router(val rootDir: String, val startSos: Boolean = true, var mockMode: Bo
         codecs.findTlvCodec(serviceId)
     }
 
-    def serviceNameToId(service: String): Tuple2[Int, Int] = {
+    def serviceNameToId(service: String): Tuple3[Int, Int,String] = {
         codecs.serviceNameToId(service)
     }
 

@@ -2,14 +2,11 @@ package scalabpe.core
 
 import java.io.File
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
-import scala.xml.Node
-import scala.xml.XML
+import org.apache.commons.lang3.StringUtils
+import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 
-import org.jboss.netty.buffer.ChannelBuffer
-import org.jboss.netty.buffer.ChannelBuffers
+import scala.collection.mutable.{ArrayBuffer, HashMap, HashSet}
+import scala.xml.{Node, XML}
 
 object FieldInfo extends Logging {
 
@@ -251,6 +248,7 @@ class TlvCodec(val configFile: String) extends Logging {
     var serviceOrigName: String = _
     var serviceName: String = _
     var version = 1
+//    var businessType:String = _ //TODO
 
     val msgIds = ArrayBufferInt()
 
@@ -260,6 +258,7 @@ class TlvCodec(val configFile: String) extends Logging {
     val msgIdToNameMap = new HashMap[Int, String]()
     val msgNameToIdMap = new HashMap[String, Int]()
     val msgIdToOrigNameMap = new HashMap[Int, String]()
+    val msgIdToBusinessTypeMap = new HashMap[Int, String]()
 
     val msgKeyToTypeMapForReq = new HashMap[Int, HashMapStringString]()
     val msgTypeToKeyMapForReq = new HashMap[Int, HashMapStringString]()
@@ -397,6 +396,8 @@ class TlvCodec(val configFile: String) extends Logging {
         serviceId = (cfgXml \ "@id").toString.toInt
         serviceOrigName = (cfgXml \ "@name").toString
         serviceName = serviceOrigName.toLowerCase
+        val serviceBusinessType = (cfgXml \"@businessType").toString()
+//        businessType = serviceBusinessType
 
         val versionStr = (cfgXml \ "@version").toString
         if (versionStr != "") version = versionStr.toInt
@@ -641,6 +642,12 @@ class TlvCodec(val configFile: String) extends Logging {
             val msgId = (t \ "@id").toString.toInt
             val msgNameOrig = (t \ "@name").toString
             val msgName = msgNameOrig.toLowerCase
+            val messageBusinessType = (t\"@businessType").toString()
+            if (StringUtils.isNotBlank(messageBusinessType)) {
+                msgIdToBusinessTypeMap.put(msgId,messageBusinessType)
+            }else{
+                msgIdToBusinessTypeMap.put(msgId,serviceBusinessType)
+            }
 
             msgIds += msgId
 
@@ -655,6 +662,7 @@ class TlvCodec(val configFile: String) extends Logging {
             msgIdToNameMap.put(msgId, msgName)
             msgNameToIdMap.put(msgName, msgId)
             msgIdToOrigNameMap.put(msgId, msgNameOrig)
+
 
             val metadatas = t.attributes.filter(_.key != "id").filter(_.key != "name")
             for (m <- metadatas) {
@@ -776,6 +784,9 @@ class TlvCodec(val configFile: String) extends Logging {
     def msgNameToId(msgName: String): Int = {
         msgNameToIdMap.getOrElse(msgName, 0)
     }
+    def msgIdToBusinessType(msgId:Int):String={
+        msgIdToBusinessTypeMap.getOrElse(msgId,null)
+    }
 
     def decodeRequest(msgId: Int, buff: ChannelBuffer, encoding: Int): Tuple2[HashMapStringAny, Int] = {
         try {
@@ -819,9 +830,9 @@ class TlvCodec(val configFile: String) extends Logging {
             val code = buff.readShort.toInt;
             var len: Int = buff.readShort & 0xffff;
             var tlvheadlen = 4
-            if (code > 0 && len == 0) { 
-                len = buff.readInt; 
-                tlvheadlen = 8; 
+            if (code > 0 && len == 0) {
+                len = buff.readInt;
+                tlvheadlen = 8;
             }
 
             if (len < tlvheadlen) { // 兼容特殊情况
@@ -1265,7 +1276,7 @@ class TlvCodec(val configFile: String) extends Logging {
         buff.writeShort(tlvType.code.toShort)
         buff.writeShort(0) // 后面再更新为实际值
         val ps = buff.writerIndex
-        
+
         for (i <- 0 until tlvType.structDef.fields.length) {
 
             val f = tlvType.structDef.fields(i)
@@ -1283,11 +1294,11 @@ class TlvCodec(val configFile: String) extends Logging {
 
             t match {
 
-                case CLS_INT => 
+                case CLS_INT =>
                     buff.writeInt(TypeSafe.anyToInt(v))
-                case CLS_LONG => 
+                case CLS_LONG =>
                     buff.writeLong(TypeSafe.anyToLong(v))
-                case CLS_DOUBLE => 
+                case CLS_DOUBLE =>
                     buff.writeDouble(TypeSafe.anyToDouble(v))
                 case CLS_STRING => {
 
@@ -1315,7 +1326,7 @@ class TlvCodec(val configFile: String) extends Logging {
 
                     buff.writeInt(TypeSafe.anyToInt(s.length))
                     buff.writeBytes(s)
-                    
+
                     var alignedLen = aligned(s.length)
                     if (s.length != alignedLen) {
                         buff.writeBytes(new Array[Byte](alignedLen - s.length))
@@ -1349,7 +1360,7 @@ class TlvCodec(val configFile: String) extends Logging {
             }
 
         }
-        
+
         val totalLen = buff.writerIndex - ps
         var tlvheadlen = 4
         var alignedLen = aligned(totalLen + tlvheadlen)
@@ -1358,7 +1369,7 @@ class TlvCodec(val configFile: String) extends Logging {
             tlvheadlen = 8
             alignedLen = aligned(totalLen + tlvheadlen)
         }
-        
+
         if (tlvheadlen == 4) {
             buff.setShort(ps - 2, (totalLen + tlvheadlen).toShort) // 写入实际长度
         } else { // struct 需整体向后移动4字节
@@ -2001,21 +2012,23 @@ class TlvCodecs(val dir: String) extends Logging {
         codecs_id.getOrElse(serviceId, null)
     }
 
-    def serviceNameToId(service: String): Tuple2[Int, Int] = {
+
+    def serviceNameToId(service: String): Tuple3[Int, Int,String] = {
         val ss = service.toLowerCase.split("\\.")
         if (ss.length != 2) {
-            return (0, 0)
+            return (0, 0,null)
         }
         val codec = codecs_names.getOrElse(ss(0), null)
         if (codec == null) {
-            return (0, 0)
+            return (0, 0,null)
         }
         val msgId = codec.msgNameToId(ss(1))
         if (msgId == 0) {
-            return (0, 0)
+            return (0, 0,null)
         }
-
-        (codec.serviceId, msgId)
+        //TODO
+        val businessType = codec.msgIdToBusinessType(msgId)
+        (codec.serviceId, msgId,businessType)
     }
 
     def serviceIdToName(serviceId: Int, msgId: Int): Tuple2[String, String] = {
