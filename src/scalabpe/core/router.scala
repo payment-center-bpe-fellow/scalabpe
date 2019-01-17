@@ -237,7 +237,7 @@ class Router(val rootDir: String, val startSos: Boolean = true, var mockMode: Bo
         if (new File(rootDir + "/" + configfile).exists()) {
             val in = new InputStreamReader(new FileInputStream(rootDir + "/" + configfile), "UTF-8")
             val pxml = XML.load(in)
-            Router.globalBizType = (pxml  \ "@businessType").toString
+            Router.globalBizType = (pxml  \ "businessType").text
             in.close()
 
             loadParameter(pxml, pmap, "assign")
