@@ -681,12 +681,12 @@ abstract class Flow extends Logging {
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
         //在此设置uniqueId,同一批次的请求requestid都一样
-        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
-        if (uniqueId == null) {
-            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
-        } else {
-            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
-        }
+//        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+//        if (uniqueId == null) {
+//            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+//        } else {
+//            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+//        }
 
         var i = 0
         while (i < infos.size) {
@@ -751,6 +751,13 @@ abstract class Flow extends Logging {
                 encoding = AvenueCodec.parseEncoding(s)
         }
 
+        //在此设置uniqueId,同一批次的请求requestid都一样
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+        if (uniqueId == null) {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+        } else {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+        }
 
         var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, currentBusinessType)
         if (StringUtils.isBlank(businessType.asInstanceOf[String])) {
