@@ -1,40 +1,64 @@
 package scalabpe.core
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.LinkedHashMap
-import scala.math.BigDecimal
-
 import org.jboss.netty.buffer.ChannelBuffer
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.{ArrayBuffer, HashMap, LinkedHashMap}
+import scala.math.BigDecimal;
 
 class HashMapStringString extends HashMap[String, String]
 
 class HashMapStringAny extends HashMap[String, Any] {
 
     def v(name: String): Any = getOrElse(name, null)
+
     def s(name: String): String = TypeSafe.s(name, this)
+
     def s(name: String, defaultValue: String): String = TypeSafe.s(name, this, defaultValue)
+
     def ns(name: String): String = TypeSafe.ns(name, this)
+
     def ns(name: String, defaultValue: String): String = TypeSafe.ns(name, this, defaultValue)
+
     def i(name: String): Int = TypeSafe.i(name, this)
+
     def i(name: String, defaultValue: Int): Int = TypeSafe.i(name, this, defaultValue)
+
     def l(name: String): Long = TypeSafe.l(name, this)
+
     def d(name: String): Double = TypeSafe.d(name, this)
+
     def bd(name: String): BigDecimal = TypeSafe.bd(name, this)
+
     def m(name: String): HashMapStringAny = TypeSafe.m(name, this)
+
     def nm(name: String): HashMapStringAny = TypeSafe.nm(name, this)
+
     def ls(name: String): ArrayBufferString = TypeSafe.ls(name, this)
+
     def nls(name: String): ArrayBufferString = TypeSafe.nls(name, this)
+
     def li(name: String): ArrayBufferInt = TypeSafe.li(name, this)
+
     def nli(name: String): ArrayBufferInt = TypeSafe.nli(name, this)
+
     def ll(name: String): ArrayBufferLong = TypeSafe.ll(name, this)
+
     def nll(name: String): ArrayBufferLong = TypeSafe.nll(name, this)
+
     def ld(name: String): ArrayBufferDouble = TypeSafe.ld(name, this)
+
     def nld(name: String): ArrayBufferDouble = TypeSafe.nld(name, this)
+
+    def nlbd(name: String): ArrayBuffer[BigDecimal] = TypeSafe.nlbd(name, this)
+
+    def nldate(name: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, this)
+
     def lm(name: String): ArrayBufferMap = TypeSafe.lm(name, this)
+
     def nlm(name: String): ArrayBufferMap = TypeSafe.nlm(name, this)
 
     def exists(names: String): Boolean = TypeSafe.exists(names, this)
@@ -44,6 +68,7 @@ class ArrayBufferString extends ArrayBuffer[String] {
     override def filter(f: (String) => Boolean): ArrayBufferString = {
         ArrayBufferString(super.filter(f))
     }
+
     override def filterNot(f: (String) => Boolean): ArrayBufferString = {
         ArrayBufferString(super.filterNot(f))
     }
@@ -52,10 +77,12 @@ class ArrayBufferString extends ArrayBuffer[String] {
         ArrayBufferString(super.sortWith(f))
     }
 }
+
 class ArrayBufferInt extends ArrayBuffer[Int] {
     override def filter(f: (Int) => Boolean): ArrayBufferInt = {
         ArrayBufferInt(super.filter(f))
     }
+
     override def filterNot(f: (Int) => Boolean): ArrayBufferInt = {
         ArrayBufferInt(super.filterNot(f))
     }
@@ -64,10 +91,12 @@ class ArrayBufferInt extends ArrayBuffer[Int] {
         ArrayBufferInt(super.sortWith(f))
     }
 }
+
 class ArrayBufferLong extends ArrayBuffer[Long] {
     override def filter(f: (Long) => Boolean): ArrayBufferLong = {
         ArrayBufferLong(super.filter(f))
     }
+
     override def filterNot(f: (Long) => Boolean): ArrayBufferLong = {
         ArrayBufferLong(super.filterNot(f))
     }
@@ -76,10 +105,12 @@ class ArrayBufferLong extends ArrayBuffer[Long] {
         ArrayBufferLong(super.sortWith(f))
     }
 }
+
 class ArrayBufferDouble extends ArrayBuffer[Double] {
     override def filter(f: (Double) => Boolean): ArrayBufferDouble = {
         ArrayBufferDouble(super.filter(f))
     }
+
     override def filterNot(f: (Double) => Boolean): ArrayBufferDouble = {
         ArrayBufferDouble(super.filterNot(f))
     }
@@ -88,10 +119,12 @@ class ArrayBufferDouble extends ArrayBuffer[Double] {
         ArrayBufferDouble(super.sortWith(f))
     }
 }
+
 class ArrayBufferMap extends ArrayBuffer[HashMapStringAny] {
     override def filter(f: (HashMapStringAny) => Boolean): ArrayBufferMap = {
         ArrayBufferMap(super.filter(f))
     }
+
     override def filterNot(f: (HashMapStringAny) => Boolean): ArrayBufferMap = {
         ArrayBufferMap(super.filterNot(f))
     }
@@ -109,6 +142,7 @@ object HashMapStringString {
         for (t <- elems) m += t
         m
     }
+
     def apply(l: HashMap[String, String]): HashMapStringString = {
         val map = new HashMapStringString()
         map ++= l
@@ -122,6 +156,7 @@ object HashMapStringAny {
         for (t <- elems) m += t
         m
     }
+
     def apply(l: HashMap[String, Any]): HashMapStringAny = {
         val map = new HashMapStringAny()
         map ++= l
@@ -135,18 +170,21 @@ object ArrayBufferString {
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[String]): ArrayBufferString = {
         val buff = new ArrayBufferString()
         buff ++= l
         buff
     }
 }
+
 object ArrayBufferInt {
     def apply(elems: Int*): ArrayBufferInt = {
         val buff = new ArrayBufferInt()
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[Int]): ArrayBufferInt = {
         val buff = new ArrayBufferInt()
         buff ++= l
@@ -160,6 +198,7 @@ object ArrayBufferLong {
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[Long]): ArrayBufferLong = {
         val buff = new ArrayBufferLong()
         buff ++= l
@@ -173,30 +212,52 @@ object ArrayBufferDouble {
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[Double]): ArrayBufferDouble = {
         val buff = new ArrayBufferDouble()
         buff ++= l
         buff
     }
 }
+
+object ArrayBufferBigDecimal {
+    def apply(elems: BigDecimal*): ArrayBuffer[BigDecimal] = {
+        val buff = new ArrayBuffer[BigDecimal]()
+        for (t <- elems) buff += t
+        buff
+    }
+}
+
+object ArrayBufferDate {
+    def apply(elems: java.util.Date*): ArrayBuffer[java.util.Date] = {
+        val buff = new ArrayBuffer[java.util.Date]()
+        for (t <- elems) buff += t
+        buff
+    }
+}
+
+
 object ArrayBufferMap {
     def apply(elems: HashMapStringAny*): ArrayBufferMap = {
         val buff = new ArrayBufferMap()
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[HashMapStringAny]): ArrayBufferMap = {
         val buff = new ArrayBufferMap()
         buff ++= l
         buff
     }
 }
+
 object ArrayBufferAny {
     def apply(elems: Any*): ArrayBufferAny = {
         val buff = new ArrayBufferAny()
         for (t <- elems) buff += t
         buff
     }
+
     def apply(l: ArrayBuffer[Any]): ArrayBufferAny = {
         val buff = new ArrayBufferAny()
         buff ++= l
@@ -207,9 +268,13 @@ object ArrayBufferAny {
 class LinkedHashMapStringAny extends LinkedHashMap[String, Any] {
 
     def v(name: String): Any = getOrElse(name, null)
+
     def s(name: String): String = TypeSafe.s(name, this)
+
     def s(name: String, defaultValue: String): String = TypeSafe.s(name, this, defaultValue)
+
     def ns(name: String): String = TypeSafe.ns(name, this)
+
     def ns(name: String, defaultValue: String): String = TypeSafe.ns(name, this, defaultValue)
 
 }
@@ -248,6 +313,7 @@ trait BeforeClose {
 trait InitHook {
     def loadParameter(pmap: HashMapStringString): Unit;
 }
+
 trait RegDisHook {
     def updateXml(xml: String): String;
 }
@@ -305,16 +371,16 @@ object ResultCodes {
 }
 
 class AvenueData(
-        val flag: Int,
-        val version: Int,
-        val serviceId: Int,
-        val msgId: Int,
-        val sequence: Int,
-        val mustReach: Int,
-        val encoding: Int,
-        val code: Int,
-        val xhead: ChannelBuffer,
-        val body: ChannelBuffer) {
+                        val flag: Int,
+                        val version: Int,
+                        val serviceId: Int,
+                        val msgId: Int,
+                        val sequence: Int,
+                        val mustReach: Int,
+                        val encoding: Int,
+                        val code: Int,
+                        val xhead: ChannelBuffer,
+                        val body: ChannelBuffer) {
     override def toString() = "sequence=%d,serviceId=%d,msgId=%d,code=%d,xhead.length=%d,body.length=%d".format(
         sequence, serviceId, msgId, code, xhead.writerIndex, body.writerIndex)
 
@@ -344,17 +410,17 @@ class RawResponse(val data: AvenueData, val connId: String) {
 }
 
 class Request(
-        var requestId: String,
-        val connId: String,
-        val sequence: Int,
-        val encoding: Int,
+                     var requestId: String,
+                     val connId: String,
+                     val sequence: Int,
+                     val encoding: Int,
 
-        val serviceId: Int,
-        val msgId: Int,
+                     val serviceId: Int,
+                     val msgId: Int,
 
-        val xhead: HashMapStringAny,
-        val body: HashMapStringAny,
-        val sender: Actor) {
+                     val xhead: HashMapStringAny,
+                     val body: HashMapStringAny,
+                     val sender: Actor) {
 
     var receivedTime = System.currentTimeMillis
     var parentServiceId = 0
@@ -365,34 +431,57 @@ class Request(
     var version = 0 // not specified
 
     def v(name: String): Any = body.getOrElse(name, null)
+
     def s(name: String): String = body.s(name)
+
     def s(name: String, defaultValue: String): String = body.s(name, defaultValue)
+
     def ns(name: String): String = body.ns(name)
+
     def ns(name: String, defaultValue: String): String = body.ns(name, defaultValue)
+
     def i(name: String): Int = body.i(name)
+
     def i(name: String, defaultValue: Int): Int = body.i(name, defaultValue)
+
     def l(name: String): Long = body.l(name)
+
     def d(name: String): Double = body.d(name)
+
     def bd(name: String): BigDecimal = body.bd(name)
 
     def m(name: String): HashMapStringAny = body.m(name)
+
     def nm(name: String): HashMapStringAny = body.nm(name)
+
     def ls(name: String): ArrayBufferString = body.ls(name)
+
     def nls(name: String): ArrayBufferString = body.nls(name)
+
     def li(name: String): ArrayBufferInt = body.li(name)
+
     def nli(name: String): ArrayBufferInt = body.nli(name)
+
     def ll(name: String): ArrayBufferLong = body.ll(name)
+
     def nll(name: String): ArrayBufferLong = body.nll(name)
+
     def ld(name: String): ArrayBufferDouble = body.ld(name)
+
     def nld(name: String): ArrayBufferDouble = body.nld(name)
+
     def lm(name: String): ArrayBufferMap = body.lm(name)
+
     def nlm(name: String): ArrayBufferMap = body.nlm(name)
 
     def exists(names: String): Boolean = TypeSafe.exists(names, body)
 
     def xs(name: String): String = xhead.s(name)
+
     def xs(name: String, defaultValue: String): String = xhead.s(name, defaultValue)
+
     def xi(name: String): Int = xhead.i(name)
+
     def xls(name: String): ArrayBufferString = xhead.ls(name)
 
     def remoteIp(): String = {
@@ -401,12 +490,14 @@ class Request(
         if (p == -1) return null
         connId.substring(0, p)
     }
+
     def remoteAddr(): String = {
         if (connId == null || connId == "") return null
         val p = connId.lastIndexOf(":")
         if (p == -1) return null
         connId.substring(0, p)
     }
+
     def clientIp(): String = {
         val firstAddr = xs(Xhead.KEY_FIRST_ADDR)
         if (firstAddr == null || firstAddr == "") return null
@@ -421,18 +512,18 @@ class Request(
 
 class Response(
 
-        val requestId: String,
-        val connId: String,
-        val sequence: Int,
-        val encoding: Int,
+                      val requestId: String,
+                      val connId: String,
+                      val sequence: Int,
+                      val encoding: Int,
 
-        val serviceId: Int,
-        val msgId: Int,
+                      val serviceId: Int,
+                      val msgId: Int,
 
-        var code: Int,
-        var body: HashMapStringAny,
+                      var code: Int,
+                      var body: HashMapStringAny,
 
-        val sender: Actor) {
+                      val sender: Actor) {
 
     val receivedTime = System.currentTimeMillis
     var remoteAddr = ""
@@ -457,34 +548,60 @@ trait ResponseFilter {
 
 object InvokeResult {
     def success(requestId: String) = new InvokeResult(requestId, 0, new HashMapStringAny())
+
     def timeout(requestId: String) = new InvokeResult(requestId, ResultCodes.SERVICE_TIMEOUT, new HashMapStringAny())
+
     def failed(requestId: String) = new InvokeResult(requestId, ResultCodes.SERVICE_NOT_FOUND, new HashMapStringAny())
 }
 
 class InvokeResult(val requestId: String, val code: Int, val res: HashMapStringAny) {
 
     def v(name: String): Any = res.getOrElse(name, null)
+
     def s(name: String): String = res.s(name)
+
     def s(name: String, defaultValue: String): String = res.s(name, defaultValue)
+
     def ns(name: String): String = res.ns(name)
+
     def ns(name: String, defaultValue: String): String = res.ns(name, defaultValue)
+
     def i(name: String): Int = res.i(name)
+
     def i(name: String, defaultValue: Int): Int = res.i(name, defaultValue)
+
     def l(name: String): Long = res.l(name)
+
     def d(name: String): Double = res.d(name)
+
     def bd(name: String): BigDecimal = res.bd(name)
 
     def m(name: String): HashMapStringAny = res.m(name)
+
     def nm(name: String): HashMapStringAny = res.nm(name)
+
     def ls(name: String): ArrayBufferString = res.ls(name)
+
     def nls(name: String): ArrayBufferString = res.nls(name)
+
     def li(name: String): ArrayBufferInt = res.li(name)
+
     def nli(name: String): ArrayBufferInt = res.nli(name)
+
     def ll(name: String): ArrayBufferLong = res.ll(name)
+
     def nll(name: String): ArrayBufferLong = res.nll(name)
+
     def ld(name: String): ArrayBufferDouble = res.ld(name)
+
     def nld(name: String): ArrayBufferDouble = res.nld(name)
+
+    def nlbd(name: String): ArrayBuffer[BigDecimal] = res.nlbd(name)
+
+    def nldate(name: String): ArrayBuffer[java.util.Date] = res.nldate(name)
+
     def lm(name: String): ArrayBufferMap = res.lm(name)
+
     def nlm(name: String): ArrayBufferMap = res.nlm(name)
 
     def exists(names: String): Boolean = TypeSafe.exists(names, res)
@@ -493,12 +610,12 @@ class InvokeResult(val requestId: String, val code: Int, val res: HashMapStringA
 }
 
 class SocRequest(
-        val requestId: String,
-        val serviceId: Int,
-        val msgId: Int,
-        val body: HashMapStringAny,
-        val encoding: Int = AvenueCodec.ENCODING_UTF8,
-        val xhead: HashMapStringAny = new HashMapStringAny()) {
+                        val requestId: String,
+                        val serviceId: Int,
+                        val msgId: Int,
+                        val body: HashMapStringAny,
+                        val encoding: Int = AvenueCodec.ENCODING_UTF8,
+                        val xhead: HashMapStringAny = new HashMapStringAny()) {
 
     var connId: String = null
     val receivedTime = System.currentTimeMillis
@@ -508,9 +625,9 @@ class SocRequest(
 }
 
 class SocResponse(
-        val requestId: String,
-        val code: Int,
-        val body: HashMapStringAny) {
+                         val requestId: String,
+                         val code: Int,
+                         val body: HashMapStringAny) {
 
     var connId: String = null
     val receivedTime = System.currentTimeMillis
@@ -522,20 +639,24 @@ class SocResponse(
 }
 
 class RawRequestResponseInfo(val rawReq: RawRequest, val rawRes: RawResponse)
+
 class RequestResponseInfo(val req: Request, val res: Response, val logVars: HashMapStringAny = null)
+
 class SocRequestResponseInfo(val req: SocRequest, val res: SocResponse)
 
 class RawRequestAckInfo(val rawReq: RawRequest)
+
 class RequestAckInfo(val req: Request)
+
 class SocRequestAckInfo(val req: SocRequest)
 
 class HttpSosRequest(
-        val requestId: String,
-        val connId: String,
-        val serviceId: Int,
-        val msgId: Int,
-        val xhead: HashMapStringAny,
-        var params: String) {
+                            val requestId: String,
+                            val connId: String,
+                            val serviceId: Int,
+                            val msgId: Int,
+                            val xhead: HashMapStringAny,
+                            var params: String) {
     var receivedTime = System.currentTimeMillis
 
     override def toString() = "requestId=%s,connId=%s,serviceId=%d,msgId=%d,params=%s,receivedTime=%d".format(
@@ -543,9 +664,9 @@ class HttpSosRequest(
 }
 
 class HttpSosResponse(
-        val requestId: String,
-        val code: Int,
-        var content: String) {
+                             val requestId: String,
+                             val code: Int,
+                             var content: String) {
     var receivedTime = System.currentTimeMillis
 
     override def toString() = "requestId=%s,code=%d,content=%s".format(requestId, code, content)
@@ -596,8 +717,8 @@ object TypeSafe {
     def isTrue(s: String): Boolean = {
         s.toLowerCase match {
             case "1" | "y" | "t" => true
-            case "yes" | "true"  => true
-            case _               => false
+            case "yes" | "true" => true
+            case _ => false
         }
     }
 
@@ -623,8 +744,8 @@ object TypeSafe {
         val value = ns(name, body)
         if (value == "") defaultValue
         else value
-    }    
-    
+    }
+
     def s(name: String, body: HashMapStringAny): String = {
         val value = body.getOrElse(name, null)
         anyToString(value)
@@ -693,6 +814,7 @@ object TypeSafe {
         if (r == null) return HashMapStringAny()
         r
     }
+
     def ls(name: String, body: HashMapStringAny): ArrayBufferString = {
         val value = body.getOrElse(name, null)
 
@@ -709,11 +831,13 @@ object TypeSafe {
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
+
     def nls(name: String, body: HashMapStringAny): ArrayBufferString = {
         val l = ls(name, body)
         if (l == null) return ArrayBufferString()
         l
     }
+
     def li(name: String, body: HashMapStringAny): ArrayBufferInt = {
         val value = body.getOrElse(name, null)
 
@@ -730,11 +854,13 @@ object TypeSafe {
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
+
     def nli(name: String, body: HashMapStringAny): ArrayBufferInt = {
         val l = li(name, body)
         if (l == null) return ArrayBufferInt()
         l
     }
+
     def ll(name: String, body: HashMapStringAny): ArrayBufferLong = {
         val value = body.getOrElse(name, null)
 
@@ -751,11 +877,13 @@ object TypeSafe {
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
+
     def nll(name: String, body: HashMapStringAny): ArrayBufferLong = {
         val l = ll(name, body)
         if (l == null) return ArrayBufferLong()
         l
     }
+
     def ld(name: String, body: HashMapStringAny): ArrayBufferDouble = {
         val value = body.getOrElse(name, null)
 
@@ -772,11 +900,47 @@ object TypeSafe {
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
+
     def nld(name: String, body: HashMapStringAny): ArrayBufferDouble = {
         val l = ld(name, body)
         if (l == null) return ArrayBufferDouble()
         l
     }
+
+    def lbd(name: String, body: HashMapStringAny): ArrayBuffer[BigDecimal] = {
+        val value = body.getOrElse(name, null)
+        if (value == null) return null
+        value match {
+            case aa: ArrayBuffer[_] =>
+                aa.map(anyToBigDecimal)
+            case _ =>
+                throw new RuntimeException("wrong data type, name=" + name)
+        }
+    }
+
+    def nlbd(name: String, body: HashMapStringAny): ArrayBuffer[BigDecimal] = {
+        val l = lbd(name, body)
+        if (l == null) return new ArrayBuffer[BigDecimal]()
+        l
+    }
+
+    def ldate(name: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
+        val value = body.getOrElse(name, null)
+        if (value == null) return null
+        value match {
+            case abas: ArrayBuffer[_] =>
+                abas.map(a => anyToDate(a))
+            case _ =>
+                throw new RuntimeException("wrong data type, name=" + name)
+        }
+    }
+
+    def nldate(name: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
+        val l = ldate(name, body)
+        if (l == null) return new ArrayBuffer()
+        l
+    }
+
     def lm(name: String, body: HashMapStringAny): ArrayBufferMap = {
         val value = body.getOrElse(name, null)
 
@@ -800,6 +964,7 @@ object TypeSafe {
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
+
     def nlm(name: String, body: HashMapStringAny): ArrayBufferMap = {
         val l = lm(name, body)
         if (l == null) return ArrayBufferMap()
@@ -811,12 +976,12 @@ object TypeSafe {
         if (value == null) return 0
 
         value match {
-            case i: Int      => i
-            case l: Long     => l.toInt
-            case s: Short    => s.toInt
-            case b: Byte     => b.toInt
-            case f: Float    => f.toInt
-            case d: Double   => d.toInt
+            case i: Int => i
+            case l: Long => l.toInt
+            case s: Short => s.toInt
+            case b: Byte => b.toInt
+            case f: Float => f.toInt
+            case d: Double => d.toInt
             case bl: Boolean => if (bl) 1 else 0
             case str: String =>
 
@@ -843,12 +1008,12 @@ object TypeSafe {
         if (value == null) return 0
 
         value match {
-            case l: Long     => l
-            case i: Int      => i
-            case s: Short    => s
-            case b: Byte     => b
-            case f: Float    => f.toLong
-            case d: Double   => d.toLong
+            case l: Long => l
+            case i: Int => i
+            case s: Short => s
+            case b: Byte => b
+            case f: Float => f.toLong
+            case d: Double => d.toLong
             case bl: Boolean => if (bl) 1 else 0
             case str: String =>
 
@@ -875,12 +1040,12 @@ object TypeSafe {
         if (value == null) return 0.0
 
         value match {
-            case d: Double   => d
-            case f: Float    => f
-            case i: Int      => i
-            case l: Long     => l
-            case s: Short    => s
-            case b: Byte     => b
+            case d: Double => d
+            case f: Float => f
+            case i: Int => i
+            case l: Long => l
+            case s: Short => s
+            case b: Byte => b
             case bl: Boolean => if (bl) 1 else 0
             case str: String =>
 
@@ -902,17 +1067,28 @@ object TypeSafe {
         }
     }
 
+    def anyToDate(value: Any, format: String = "yyyy-MM-dd HH:mm:ss"): java.util.Date = {
+        if (value == null) return null
+        val sdf: SimpleDateFormat = new SimpleDateFormat(format)
+        try {
+            sdf.parse(value.asInstanceOf[String])
+            return null;
+        } catch {
+            case e: Exception => null
+        }
+    }
+
     def anyToBigDecimal(value: Any): BigDecimal = {
 
         if (value == null) return 0.0
 
         value match {
-            case i: Int      => BigDecimal(i)
-            case l: Long     => BigDecimal(l)
-            case s: Short    => BigDecimal(s)
-            case b: Byte     => BigDecimal(b)
-            case f: Float    => BigDecimal(f.toDouble)
-            case d: Double   => BigDecimal(d)
+            case i: Int => BigDecimal(i)
+            case l: Long => BigDecimal(l)
+            case s: Short => BigDecimal(s)
+            case b: Byte => BigDecimal(b)
+            case f: Float => BigDecimal(f.toDouble)
+            case d: Double => BigDecimal(d)
             case bl: Boolean => if (bl) BigDecimal(1) else BigDecimal(0)
             case str: String =>
 
@@ -940,7 +1116,7 @@ object TypeSafe {
 
         value match {
             case str: String => str
-            case _           => value.toString
+            case _ => value.toString
         }
     }
 
