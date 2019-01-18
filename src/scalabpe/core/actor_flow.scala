@@ -719,7 +719,6 @@ abstract class Flow extends Logging {
 
     private def send(info: InvokeInfo, subrequestId: String): InvokeResult = {
 
-        //TODO bizType后续处理
         val (serviceId, msgId,currentBusinessType) = Flow.router.serviceNameToId(info.service)
 
         if (serviceId == 0) {
