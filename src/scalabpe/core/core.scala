@@ -55,7 +55,7 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def nlbd(name: String): ArrayBuffer[BigDecimal] = TypeSafe.nlbd(name, this)
 
-    def nldate(name: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, this)
+    def nldate(name: String, format: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, format, this)
 
     def lm(name: String): ArrayBufferMap = TypeSafe.lm(name, this)
 
@@ -598,7 +598,7 @@ class InvokeResult(val requestId: String, val code: Int, val res: HashMapStringA
 
     def nlbd(name: String): ArrayBuffer[BigDecimal] = res.nlbd(name)
 
-    def nldate(name: String): ArrayBuffer[java.util.Date] = res.nldate(name)
+    def nldate(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.util.Date] = res.nldate(name, format)
 
     def lm(name: String): ArrayBufferMap = res.lm(name)
 
@@ -924,19 +924,20 @@ object TypeSafe {
         l
     }
 
-    def ldate(name: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
+    def ldate(name: String, format: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
         val value = body.getOrElse(name, null)
         if (value == null) return null
         value match {
             case abas: ArrayBuffer[_] =>
-                abas.map(a => anyToDate(a))
+                abas.map(aba => anyToDate(aba,format))
+            //abas.map(anyToDate(_))
             case _ =>
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
 
-    def nldate(name: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
-        val l = ldate(name, body)
+    def nldate(name: String, format: String, body: HashMapStringAny): ArrayBuffer[java.util.Date] = {
+        val l = ldate(name, format, body)
         if (l == null) return new ArrayBuffer()
         l
     }
@@ -1072,7 +1073,6 @@ object TypeSafe {
         val sdf: SimpleDateFormat = new SimpleDateFormat(format)
         try {
             sdf.parse(value.asInstanceOf[String])
-            return null;
         } catch {
             case e: Exception => null
         }
