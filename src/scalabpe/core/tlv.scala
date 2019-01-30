@@ -257,7 +257,6 @@ class TlvCodec(val configFile: String) extends Logging {
     val msgIdToNameMap = new HashMap[Int, String]()
     val msgNameToIdMap = new HashMap[String, Int]()
     val msgIdToOrigNameMap = new HashMap[Int, String]()
-    val msgIdToBusinessTypeMap = new HashMap[Int, String]()
 
     val msgKeyToTypeMapForReq = new HashMap[Int, HashMapStringString]()
     val msgTypeToKeyMapForReq = new HashMap[Int, HashMapStringString]()
@@ -643,9 +642,9 @@ class TlvCodec(val configFile: String) extends Logging {
             val msgName = msgNameOrig.toLowerCase
             val messageBusinessType = (t\"@businessType").toString()
             if (StringUtils.isNotBlank(messageBusinessType)) {
-                msgIdToBusinessTypeMap.put(msgId,messageBusinessType)
+                Router.serviceMsgIdToBusinessTypeMap.put(serviceId + "_" + msgId, messageBusinessType)
             }else{
-                msgIdToBusinessTypeMap.put(msgId,serviceBusinessType)
+                Router.serviceMsgIdToBusinessTypeMap.put(serviceId+"_"+msgId, serviceBusinessType)
             }
 
             msgIds += msgId
@@ -657,6 +656,7 @@ class TlvCodec(val configFile: String) extends Logging {
             if (msgNameToIdMap.getOrElse(msgName, null) != null) {
                 throw new CodecException("msgName duplicated, msgName=%s,serviceId=%d".format(msgName, serviceId))
             }
+
 
             msgIdToNameMap.put(msgId, msgName)
             msgNameToIdMap.put(msgName, msgId)
@@ -783,8 +783,8 @@ class TlvCodec(val configFile: String) extends Logging {
     def msgNameToId(msgName: String): Int = {
         msgNameToIdMap.getOrElse(msgName, 0)
     }
-    def msgIdToBusinessType(msgId:Int):String={
-        msgIdToBusinessTypeMap.getOrElse(msgId,null)
+    def msgIdToBusinessType(serviceId:Int,msgId:Int):String={
+        Router.serviceMsgIdToBusinessTypeMap.getOrElse(serviceId + "_" + msgId, null)
     }
 
     def decodeRequest(msgId: Int, buff: ChannelBuffer, encoding: Int): Tuple2[HashMapStringAny, Int] = {
@@ -2026,7 +2026,7 @@ class TlvCodecs(val dir: String) extends Logging {
             return (0, 0,null)
         }
 
-        val businessType = codec.msgIdToBusinessType(msgId)
+        val businessType = codec.msgIdToBusinessType(codec.serviceId ,msgId)
         (codec.serviceId, msgId,businessType)
     }
 

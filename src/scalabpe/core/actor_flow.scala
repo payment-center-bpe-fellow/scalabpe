@@ -387,7 +387,7 @@ abstract class Flow extends Logging {
         try {
 
             val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID, null)
-            val businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, null)
+            var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, null)
             if (uniqueId != null) {
                 req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
                 req.requestId = uniqueId.asInstanceOf[String]
@@ -396,8 +396,10 @@ abstract class Flow extends Logging {
             }
             if (businessType != null) {
                 req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
+            } else {
+                businessType = Router.serviceMsgIdToBusinessTypeMap.getOrElse(req.serviceId + "_" + req.msgId, "")
+                req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
             }
-
             filterRequest(req.body)
 
             baseReceive()

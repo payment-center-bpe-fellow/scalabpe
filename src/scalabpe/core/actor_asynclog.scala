@@ -671,7 +671,7 @@ class AsyncLogActor(val router: Router) extends Actor with Logging with Closable
                 keyBuff.append(now).append(",  ")
 
                 val fromSosOrSoc = info.req.sender != null && info.req.sender.isInstanceOf[RawRequestActor]
-                if (!fromSosOrSoc) {
+                if (!fromSosOrSoc) { //request_audit.log
 
                     keyBuff.append(info.req.serviceId)
                     keyBuff.append(",  ")
@@ -712,7 +712,7 @@ class AsyncLogActor(val router: Router) extends Actor with Logging with Closable
 
                     log.info(buff.toString)
 
-                } else {
+                } else {// csos_audit.log
 
                     keyBuff.append(info.req.serviceId).append(",  ")
                     keyBuff.append(info.req.msgId).append(",  ")
