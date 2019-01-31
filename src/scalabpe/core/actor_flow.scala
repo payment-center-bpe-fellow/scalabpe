@@ -390,7 +390,7 @@ abstract class Flow extends Logging {
             var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, null)
             if (uniqueId != null) {
                 req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
-                req.requestId = uniqueId.asInstanceOf[String]
+//                req.requestId = uniqueId.asInstanceOf[String]
             } else {
                 req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
             }

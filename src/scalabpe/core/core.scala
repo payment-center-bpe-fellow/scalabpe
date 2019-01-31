@@ -1,6 +1,8 @@
 package scalabpe.core
 
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 
 import org.jboss.netty.buffer.ChannelBuffer
@@ -56,6 +58,8 @@ class HashMapStringAny extends HashMap[String, Any] {
     def nlbd(name: String): ArrayBuffer[BigDecimal] = TypeSafe.nlbd(name, this)
 
     def nldate(name: String, format: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, format, this)
+
+    def nlLocaDateTime(name: String, format: String):ArrayBuffer[java.time.LocalDateTime] = TypeSafe.nlLocalDateTime(name, format, this)
 
     def lm(name: String): ArrayBufferMap = TypeSafe.lm(name, this)
 
@@ -600,6 +604,8 @@ class InvokeResult(val requestId: String, val code: Int, val res: HashMapStringA
 
     def nldate(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.util.Date] = res.nldate(name, format)
 
+    def nlLocalDateTime(name:String,format: String = "yyyy-MM-dd HH:mm:ss"):ArrayBuffer[java.time.LocalDateTime] = res.nlLocaDateTime(name,format)
+
     def lm(name: String): ArrayBufferMap = res.lm(name)
 
     def nlm(name: String): ArrayBufferMap = res.nlm(name)
@@ -942,6 +948,24 @@ object TypeSafe {
         l
     }
 
+
+    def llocalDateTime(name: String, format: String, body: HashMapStringAny):ArrayBuffer[java.time.LocalDateTime] = {
+        val value = body.getOrElse(name,null)
+        if (value == null) return null
+        value match {
+            case abas : ArrayBuffer[_] =>
+                abas.map(aba => anyToLocaDateTime(aba,format))
+            case _ =>
+                throw new RuntimeException("wrong data type, name=" + name)
+        }
+    }
+
+    def nlLocalDateTime(name: String, format: String, body: HashMapStringAny):ArrayBuffer[java.time.LocalDateTime] = {
+        val l = llocalDateTime(name, format, body)
+        if (l == null) return new ArrayBuffer()
+        l
+    }
+
     def lm(name: String, body: HashMapStringAny): ArrayBufferMap = {
         val value = body.getOrElse(name, null)
 
@@ -1074,6 +1098,16 @@ object TypeSafe {
         try {
             sdf.parse(value.asInstanceOf[String])
         } catch {
+            case e: Exception => null
+        }
+    }
+
+    def anyToLocaDateTime(value: Any, format: String = "yyyy-MM-dd HH:mm:ss"): java.time.LocalDateTime = {
+        if (value == null) return null
+        val  formatter = DateTimeFormatter.ofPattern(format)
+        try{
+            LocalDateTime.parse(value.asInstanceOf[String],formatter)
+        }catch {
             case e: Exception => null
         }
     }
