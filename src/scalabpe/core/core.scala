@@ -35,6 +35,10 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def bd(name: String): BigDecimal = TypeSafe.bd(name, this)
 
+    def date(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date): java.util.Date = TypeSafe.date(name, this, format, defaultValue)
+
+    def localdatetime(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime): LocalDateTime = TypeSafe.localtimedate(name, this, format, defaultValue)
+
     def m(name: String): HashMapStringAny = TypeSafe.m(name, this)
 
     def nm(name: String): HashMapStringAny = TypeSafe.nm(name, this)
@@ -458,6 +462,10 @@ class Request(
 
     def nm(name: String): HashMapStringAny = body.nm(name)
 
+    def date(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date = null): java.util.Date = body.date(name, format, defaultValue)
+
+    def localdatetime(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime = null): LocalDateTime = body.localdatetime(name, format, defaultValue)
+
     def ls(name: String): ArrayBufferString = body.ls(name)
 
     def nls(name: String): ArrayBufferString = body.nls(name)
@@ -763,6 +771,24 @@ object TypeSafe {
         else value
     }
 
+    def localtimedate(name: String, body: HashMapStringAny, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime = null): LocalDateTime = {
+        val value = body.getOrElse(name,defaultValue)
+        try {
+            anyToLocaDateTime(value, format)
+        } catch {
+            case e: Exception => defaultValue
+        }
+    }
+
+    def date(name: String, body: HashMapStringAny, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date = null): java.util.Date = {
+        val value = body.getOrElse(name,defaultValue)
+        try {
+            anyToDate(value, format)
+        } catch {
+            case e: Exception => defaultValue
+        }
+    }
+
     def ns(name: String, body: HashMapStringAny): String = {
         val value = body.getOrElse(name, null)
         val v = anyToString(value)
@@ -801,6 +827,7 @@ object TypeSafe {
         val value = body.getOrElse(name, null)
         anyToBigDecimal(value)
     }
+
 
     def m(name: String, body: HashMapStringAny): HashMapStringAny = {
         val value = body.getOrElse(name, null)
