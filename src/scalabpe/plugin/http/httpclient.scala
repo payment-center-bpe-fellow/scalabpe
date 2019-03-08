@@ -1,51 +1,19 @@
 package scalabpe.plugin.http
 
-import java.net.URLDecoder
-import java.net.URLEncoder
+import java.net.{URLDecoder, URLEncoder}
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.LinkedHashMap
-import scala.xml.Elem
-import scala.xml.Node
-import scala.xml.XML
-
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import org.apache.commons.lang3.StringUtils
 import org.jboss.netty.buffer.DynamicChannelBuffer
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest
-import org.jboss.netty.handler.codec.http.HttpMethod
-import org.jboss.netty.handler.codec.http.HttpRequest
-import org.jboss.netty.handler.codec.http.HttpResponse
-import org.jboss.netty.handler.codec.http.HttpVersion
+import org.jboss.netty.handler.codec.http._
+import scalabpe.core._
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-
-import scalabpe.core.ArrayBufferMap
-import scalabpe.core.ArrayBufferString
-import scalabpe.core.CachedSplitter
-import scalabpe.core.CryptHelper
-import scalabpe.core.Dumpable
-import scalabpe.core.HashMapStringAny
-import scalabpe.core.HashMapStringString
-import scalabpe.core.HttpClient4Netty
-import scalabpe.core.Logging
-import scalabpe.core.NettyHttpClient
-import scalabpe.core.Request
-import scalabpe.core.RequestResponseInfo
-import scalabpe.core.Response
-import scalabpe.core.ResultCodes
-import scalabpe.core.SocRequest
-import scalabpe.core.SocRequestResponseInfo
-import scalabpe.core.SocResponse
-import scalabpe.core.TlvCodec
-import scalabpe.core.TlvCodecs
-import scalabpe.core.TlvType
+import scala.collection.mutable.{ArrayBuffer, HashMap, HashSet, LinkedHashMap}
+import scala.xml.{Elem, Node, XML}
 
 // used by user
 trait HttpClient {
@@ -123,7 +91,9 @@ class HttpAhtCfg(
         val wsResWrap: String = "",
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
-        val wsNs: String = "") {
+        val wsNs: String = "",
+        val businessType: String = "",
+        val needBizType: Boolean = false) {
 
     override def toString(): String = {
         "serviceId=%d,msgId=%d,serverUrl=%s,serverUrlSuffix=%s,needSignature=%s,signatureKey=%s,method=%s,requestContentType=%s,charSet=%s,pluginObj=%s".
@@ -163,7 +133,8 @@ class HttpMsgDefine(
         val wsResWrap: String = "",
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
-        val wsNs: String = "") {
+        val wsNs: String = "",
+        val needBizType: Boolean = false) {
 
     override def toString(): String = {
         "serviceId=%d,msgId=%d,host=%s,path=%s,needSignature=%s,signatureKey=%s,method=%d,requestContentType=%s,charSet=%s,pluginObj=%s,signatureKeyField=%s,customUrlField=%s,resultCodeField=%s,reqFields=%s,resFields=%s".
@@ -247,6 +218,8 @@ class HttpClientImpl(
             val wsResWrap = (t \ "WSResWrap").text
             val wsWrapNs = (t \ "WSWrapNs").text
             val wsSOAPAction = (t \ "WSSOAPAction").text
+            val needBizType = (t \ "NeedBizType").text
+            val businessType = (t \ "Businesstype").text
             val wsNs = rempty.replaceAllIn((t \ "WSNs").text, " ")
 
             val plugin = (t \ "Plugin").text
@@ -270,11 +243,16 @@ class HttpClientImpl(
 
             }
 
+            var needBizTypeB = false
+            if (StringUtils.isNotBlank(needBizType) && needBizType.equals("true")) {
+                needBizTypeB = true
+            }
+
             val cfg = new HttpAhtCfg(
                 serviceId, msgId,
                 serverUrl, serverUrlSuffix,
                 needSignature, signatureKey, method, requestContentType, charSet, parseContentOnError, pluginObj,
-                wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs)
+                wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs,businessType,needBizTypeB)
 
             ahtServiceIds.add(serviceId)
             ahtCfgs.put(serviceId + ":" + msgId, cfg)
@@ -437,13 +415,18 @@ class HttpClientImpl(
                 if (ahtCfg != null && ahtCfg.wsNs != "") wsNs = ahtCfg.wsNs
                 if (wsNs == "" && defaultAhtCfg != null && defaultAhtCfg.wsNs != "") wsNs = defaultAhtCfg.wsNs
 
+                var needBizType = false
+                if (ahtCfg !=null){
+                    needBizType = ahtCfg.needBizType
+                }
+
                 val msg = new HttpMsgDefine(
                     serviceId, msgId, name,
                     reqs, ress,
                     ssl, host, path,
                     needSignature, signatureKey, method, requestContentType, charSet, parseContentOnError, pluginObj, 
                     signatureKeyField, customUrlField, resultCodeField,
-                    wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs)
+                    wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs,needBizType)
 
                 if (requestContentType == HttpMsgDefine.MIMETYPE_XML && (wsResSuffix != "" || wsResWrap != "" || wsReqSuffix != "" || wsReqWrap != "")) {
                     val pathPrefix = "Body." + msg.name + wsResSuffix + "." + wsResWrap + "."
@@ -901,10 +884,12 @@ class HttpClientImpl(
         outBody
     }
 
-    def generateHostPath(msg: HttpMsgDefine, reqBody: HashMapStringAny): Tuple3[Boolean, String, String] = {
+    def generateHostPath(msg: HttpMsgDefine, head: HashMapStringAny, reqBody: HashMapStringAny): Tuple3[Boolean, String, String] = {
         var ssl = msg.ssl
         var host = msg.host
         var path = msg.path
+        val bizType = head.s(Xhead.KEY_BUSINESS_TYPE)
+
 
         if (msg.customUrlField != null) {
             val s = reqBody.s(msg.customUrlField, "")
@@ -915,11 +900,21 @@ class HttpClientImpl(
                 path = custompath
             }
         }
+        if (msg.needBizType) {
+            if (path.contains("?")) {
+                path += "&bizType=" + bizType
+            } else {
+                path += "?bizType=" + bizType
+            }
+        }
+
+
 
         (ssl, host, path)
     }
 
     def send(req: Request, timeout: Int): Unit = {
+
 
         val msg = findMsg(req.serviceId, req.msgId)
         if (msg == null) {
@@ -933,7 +928,7 @@ class HttpClientImpl(
             reqPlugin.adjustRequestBody(msg, req.body)
         }
 
-        val (ssl, host, path) = generateHostPath(msg, req.body)
+        val (ssl, host, path) = generateHostPath(msg, req.xhead, req.body)
         if (host == "" || path == "") {
             val res = createErrorResponse(ResultCodes.TLV_ENCODE_ERROR, req)
             receiver_f(new RequestResponseInfo(req, res))
@@ -961,7 +956,7 @@ class HttpClientImpl(
             reqPlugin.adjustRequestBody(msg, req.body)
         }
 
-        val (ssl, host, path) = generateHostPath(msg, req.body)
+        val (ssl, host, path) = generateHostPath(msg, req.xhead, req.body)
         if (host == "" || path == "") {
             val res = createErrorResponse(ResultCodes.TLV_ENCODE_ERROR, req)
             receiver_f(new SocRequestResponseInfo(req, res))
