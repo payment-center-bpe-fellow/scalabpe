@@ -92,7 +92,7 @@ class HttpAhtCfg(
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
         val wsNs: String = "",
-        val businessType: String = "",
+        val businessType: String = _,
         val needBizType: Boolean = false) {
 
     override def toString(): String = {
@@ -134,6 +134,7 @@ class HttpMsgDefine(
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
         val wsNs: String = "",
+        val businessType:String = _,
         val needBizType: Boolean = false) {
 
     override def toString(): String = {
@@ -218,8 +219,8 @@ class HttpClientImpl(
             val wsResWrap = (t \ "WSResWrap").text
             val wsWrapNs = (t \ "WSWrapNs").text
             val wsSOAPAction = (t \ "WSSOAPAction").text
-            val needBizType = (t \ "NeedBizType").text
             val businessType = (t \ "Businesstype").text
+            val needBizType = (t \ "NeedBizType").text
             val wsNs = rempty.replaceAllIn((t \ "WSNs").text, " ")
 
             val plugin = (t \ "Plugin").text
@@ -415,9 +416,18 @@ class HttpClientImpl(
                 if (ahtCfg != null && ahtCfg.wsNs != "") wsNs = ahtCfg.wsNs
                 if (wsNs == "" && defaultAhtCfg != null && defaultAhtCfg.wsNs != "") wsNs = defaultAhtCfg.wsNs
 
+                var businessType: String = null
+                if (ahtCfg != null) {
+                    businessType = ahtCfg.businessType
+                } else if (defaultAhtCfg != null) {
+                    businessType = defaultAhtCfg.businessType
+                }
+
                 var needBizType = false
-                if (ahtCfg !=null){
+                if (ahtCfg != null) {
                     needBizType = ahtCfg.needBizType
+                } else if (defaultAhtCfg != null) {
+                    needBizType = defaultAhtCfg.needBizType
                 }
 
                 val msg = new HttpMsgDefine(
@@ -426,7 +436,7 @@ class HttpClientImpl(
                     ssl, host, path,
                     needSignature, signatureKey, method, requestContentType, charSet, parseContentOnError, pluginObj, 
                     signatureKeyField, customUrlField, resultCodeField,
-                    wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs,needBizType)
+                    wsReqSuffix, wsResSuffix, wsReqWrap, wsResWrap, wsWrapNs, wsSOAPAction, wsNs,businessType,needBizType)
 
                 if (requestContentType == HttpMsgDefine.MIMETYPE_XML && (wsResSuffix != "" || wsResWrap != "" || wsReqSuffix != "" || wsReqWrap != "")) {
                     val pathPrefix = "Body." + msg.name + wsResSuffix + "." + wsResWrap + "."
@@ -888,7 +898,7 @@ class HttpClientImpl(
         var ssl = msg.ssl
         var host = msg.host
         var path = msg.path
-        val bizType = head.s(Xhead.KEY_BUSINESS_TYPE)
+        val bizType = head.getOrElse(Xhead.KEY_BUSINESS_TYPE, msg.businessType)
 
 
         if (msg.customUrlField != null) {
@@ -908,13 +918,10 @@ class HttpClientImpl(
             }
         }
 
-
-
         (ssl, host, path)
     }
 
     def send(req: Request, timeout: Int): Unit = {
-
 
         val msg = findMsg(req.serviceId, req.msgId)
         if (msg == null) {
