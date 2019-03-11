@@ -92,7 +92,7 @@ class HttpAhtCfg(
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
         val wsNs: String = "",
-        val businessType: String = _,
+        val businessType: String = null,
         val needBizType: Boolean = false) {
 
     override def toString(): String = {
@@ -134,7 +134,7 @@ class HttpMsgDefine(
         val wsWrapNs: String = "",
         val wsSOAPAction: String = "",
         val wsNs: String = "",
-        val businessType:String = _,
+        val businessType:String = null,
         val needBizType: Boolean = false) {
 
     override def toString(): String = {
