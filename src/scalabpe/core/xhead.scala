@@ -2,10 +2,9 @@ package scalabpe.core
 
 import java.net.InetAddress
 
-import scala.collection.mutable.HashMap
+import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 
-import org.jboss.netty.buffer.ChannelBuffer
-import org.jboss.netty.buffer.ChannelBuffers
+import scala.collection.mutable.HashMap
 
 class XheadType(val code: Int, val name: String, val cls: String)
 
@@ -18,12 +17,14 @@ object Xhead {
     val KEY_UNIQUE_ID = "uniqueId"
     val KEY_SPS_ID = "spsId"
     val KEY_HTTP_TYPE = "httpType"
+    val KEY_BUSINESS_TYPE = "businessType"
 
     val CODE_SOC_ID = 1
     val CODE_ADDRS = 2
     val CODE_UNIQUE_ID = 9
     val CODE_SPS_ID = 11
     val CODE_HTTP_TYPE = 12
+    val CODE_BUSINESS_TYPE = 16
 
     val KEY_FIRST_ADDR = "firstAddr"
     val KEY_LAST_ADDR = "lastAddr"
@@ -43,10 +44,11 @@ object Xhead {
         add(6, "hostId", "int")
         add(7, "spId", "int")
         add(8, "endpointId", "string")
-        add(CODE_UNIQUE_ID, KEY_UNIQUE_ID, "string") // 9
+        add(CODE_UNIQUE_ID, KEY_UNIQUE_ID, "string") // 9 唯一请求标识符
         add(CODE_SPS_ID, KEY_SPS_ID, "string") // 11 
         add(CODE_HTTP_TYPE, KEY_HTTP_TYPE, "int") // 12
         add(13, "logId", "string")
+        add(CODE_BUSINESS_TYPE,KEY_BUSINESS_TYPE,"string")// 16 业务类型
     }
 
     def add(code: Int, name: String, tp: String) {
@@ -59,8 +61,8 @@ object Xhead {
 
 object TlvCodec4Xhead extends Logging {
 
-    import Xhead._
     import TlvCodec._
+    import Xhead._
 
     val SPS_ID_0 = "00000000000000000000000000000000"  // 32个字符
 

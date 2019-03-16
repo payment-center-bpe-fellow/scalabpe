@@ -1,15 +1,11 @@
 package scalabpe.core
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
+import org.apache.commons.lang3.StringUtils
+
+import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 case class FlowCallTimeout(requestId: String)
 case class FlowTimeout(requestId: String)
@@ -389,6 +385,21 @@ abstract class Flow extends Logging {
         lock.lock();
 
         try {
+
+            val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID, null)
+            var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, null)
+            if (uniqueId != null) {
+                req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+//                req.requestId = uniqueId.asInstanceOf[String]
+            } else {
+                req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+            }
+            if (businessType != null) {
+                req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
+            } else {
+                businessType = Router.serviceMsgIdToBusinessTypeMap.getOrElse(req.serviceId + "_" + req.msgId, "")
+                req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
+            }
             filterRequest(req.body)
 
             baseReceive()
@@ -671,6 +682,13 @@ abstract class Flow extends Logging {
 
         lastresultarray = ArrayBuffer.fill[InvokeResult](infos.size)(null)
         subrequestIds = nextRequestIds(infos.size)
+        //在此设置uniqueId,同一批次的请求requestid都一样
+//        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+//        if (uniqueId == null) {
+//            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+//        } else {
+//            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+//        }
 
         var i = 0
         while (i < infos.size) {
@@ -703,7 +721,7 @@ abstract class Flow extends Logging {
 
     private def send(info: InvokeInfo, subrequestId: String): InvokeResult = {
 
-        val (serviceId, msgId) = Flow.router.serviceNameToId(info.service)
+        val (serviceId, msgId,currentBusinessType) = Flow.router.serviceNameToId(info.service)
 
         if (serviceId == 0) {
             log.error("service not found, service=%s".format(info.service))
@@ -733,6 +751,21 @@ abstract class Flow extends Logging {
             if (s != null && s != "")
                 encoding = AvenueCodec.parseEncoding(s)
         }
+
+        //在此设置uniqueId,同一批次的请求requestid都一样
+        val uniqueId = req.xhead.getOrElse(Xhead.KEY_UNIQUE_ID,null)
+        if (uniqueId == null) {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, req.requestId)
+        } else {
+            req.xhead.put(Xhead.KEY_UNIQUE_ID, uniqueId)
+        }
+
+        var businessType = req.xhead.getOrElse(Xhead.KEY_BUSINESS_TYPE, currentBusinessType)
+        if (StringUtils.isBlank(businessType.asInstanceOf[String])) {
+            businessType = Router.globalBizType
+        }
+        req.xhead.put(Xhead.KEY_BUSINESS_TYPE, businessType)
+
 
         val newreq = new Request(
             subrequestId,
@@ -811,6 +844,12 @@ abstract class Flow extends Logging {
         body
     }
 
+    /**
+      * check if the parameter in the invoke() is a attribute in the extended header
+      * @param xheadSupport default true
+      * @param name parameter in invoke()
+      * @return true: if and only if when the parameter begins with "xhead."
+      */
     private def checkIsXhead(xheadSupport: Boolean, name: String): Tuple2[String, Boolean] = {
         if (xheadSupport && name.startsWith("xhead.")) {
             val t = (name.substring(6), true)

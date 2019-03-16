@@ -573,7 +573,7 @@
 
 # <a name="newredis">原生版Redis服务配置</a>
 
-    <RedisCacheCfgV2 threadNum="2" 
+    <RedisCfgV2 threadNum="2" 
         timeout="10000"
         connectTimeout="15000"
         pingInterval="60000"
@@ -587,7 +587,7 @@
         <ServerAddr>10.241.37.37:11211</ServerAddr>
         <ServerAddr>10.241.37.37:11211</ServerAddr>
         ...
-    </RedisCacheCfgV2>
+    </RedisCfgV2>
 
     threadNum 若未配置，默认为2
     timeout 超时时间，默认10秒

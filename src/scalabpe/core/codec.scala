@@ -149,6 +149,7 @@ class AvenueCodec {
 
         val body = get_encrypted_body(res.body, key)
 
+
         val standardLen = if (res.version == 1) STANDARD_HEADLEN_V1 else STANDARD_HEADLEN_V2
 
         val headLen0 = standardLen + res.xhead.writerIndex

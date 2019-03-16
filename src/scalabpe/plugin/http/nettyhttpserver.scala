@@ -89,7 +89,7 @@ class NettyHttpServerHandler(val nettyHttpServer: NettyHttpServer, val sos: Http
                         reqResInfo.res.receivedTime = System.currentTimeMillis
                         Flow.router.asyncLogActor.receive(reqResInfo)
                     }
-                });
+                })
             }
             return true
         }
