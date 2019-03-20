@@ -219,7 +219,7 @@ class HttpClientImpl(
             val wsResWrap = (t \ "WSResWrap").text
             val wsWrapNs = (t \ "WSWrapNs").text
             val wsSOAPAction = (t \ "WSSOAPAction").text
-            val businessType = (t \ "Businesstype").text
+            val businessType = (t \ "BusinessType").text
             val needBizType = (t \ "NeedBizType").text
             val wsNs = rempty.replaceAllIn((t \ "WSNs").text, " ")
 
