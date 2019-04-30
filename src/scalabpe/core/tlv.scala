@@ -1525,7 +1525,7 @@ class TlvCodec(val configFile: String) extends Logging {
 
                 val tlvType = typeNameToCodeMap.getOrElse(typeName, UNKNOWN)
                 tlvType.cls match {
-
+//TODO
                     case CLS_INT =>
                         retmap.put(key, TypeSafe.anyToInt(value))
                     case CLS_LONG =>
