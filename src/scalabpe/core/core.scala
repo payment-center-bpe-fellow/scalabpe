@@ -29,6 +29,8 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def i(name: String, defaultValue: Int): Int = TypeSafe.i(name, this, defaultValue)
 
+    def ni(name: String, defaultValue: Int,defaultTLvValue:Int=0): Int = TypeSafe.ni(name, this, defaultValue,defaultTLvValue)
+
     def l(name: String): Long = TypeSafe.l(name, this)
 
     def d(name: String): Double = TypeSafe.d(name, this)
@@ -810,6 +812,13 @@ object TypeSafe {
     def i(name: String, body: HashMapStringAny, defaultValue: Int): Int = {
         val value = body.getOrElse(name, null)
         if (value == null) return defaultValue
+        anyToInt(value)
+    }
+
+
+    def ni(name: String, body: HashMapStringAny, defaultValue: Int, defaultTlvValue: Int): Int = {
+        val value = body.getOrElse(name, null)
+        if (value == null || value == defaultTlvValue) return defaultValue
         anyToInt(value)
     }
 
