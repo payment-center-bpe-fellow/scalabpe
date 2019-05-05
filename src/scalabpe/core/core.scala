@@ -29,7 +29,7 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def i(name: String, defaultValue: Int): Int = TypeSafe.i(name, this, defaultValue)
 
-    def ni(name: String, defaultValue: Int,defaultTLvValue:Int=0): Int = TypeSafe.ni(name, this, defaultValue,defaultTLvValue)
+    def ni(name: String, defaultValue: Int, defaultTLvValue: Int = 0): Int = TypeSafe.ni(name, this, defaultValue, defaultTLvValue)
 
     def l(name: String): Long = TypeSafe.l(name, this)
 
@@ -65,7 +65,7 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def nldate(name: String, format: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, format, this)
 
-    def nlLocaDateTime(name: String, format: String):ArrayBuffer[java.time.LocalDateTime] = TypeSafe.nlLocalDateTime(name, format, this)
+    def nlLocaDateTime(name: String, format: String): ArrayBuffer[java.time.LocalDateTime] = TypeSafe.nlLocalDateTime(name, format, this)
 
     def lm(name: String): ArrayBufferMap = TypeSafe.lm(name, this)
 
@@ -614,7 +614,7 @@ class InvokeResult(val requestId: String, val code: Int, val res: HashMapStringA
 
     def nldate(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.util.Date] = res.nldate(name, format)
 
-    def nlLocalDateTime(name:String,format: String = "yyyy-MM-dd HH:mm:ss"):ArrayBuffer[java.time.LocalDateTime] = res.nlLocaDateTime(name,format)
+    def nlLocalDateTime(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.time.LocalDateTime] = res.nlLocaDateTime(name, format)
 
     def lm(name: String): ArrayBufferMap = res.lm(name)
 
@@ -774,7 +774,7 @@ object TypeSafe {
     }
 
     def localtimedate(name: String, body: HashMapStringAny, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime = null): LocalDateTime = {
-        val value = body.getOrElse(name,defaultValue)
+        val value = body.getOrElse(name, defaultValue)
         try {
             anyToLocaDateTime(value, format)
         } catch {
@@ -783,7 +783,7 @@ object TypeSafe {
     }
 
     def date(name: String, body: HashMapStringAny, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date = null): java.util.Date = {
-        val value = body.getOrElse(name,defaultValue)
+        val value = body.getOrElse(name, defaultValue)
         try {
             anyToDate(value, format)
         } catch {
@@ -815,11 +815,10 @@ object TypeSafe {
         anyToInt(value)
     }
 
-
     def ni(name: String, body: HashMapStringAny, defaultValue: Int, defaultTlvValue: Int): Int = {
-        val value = body.getOrElse(name, null)
-        if (value == null || value == defaultTlvValue) return defaultValue
-        anyToInt(value)
+        val value = i(name, body)
+        if (value == defaultTlvValue) defaultValue
+        else value
     }
 
     def l(name: String, body: HashMapStringAny): Long = {
@@ -971,7 +970,7 @@ object TypeSafe {
         if (value == null) return null
         value match {
             case abas: ArrayBuffer[_] =>
-                abas.map(aba => anyToDate(aba,format))
+                abas.map(aba => anyToDate(aba, format))
             //abas.map(anyToDate(_))
             case _ =>
                 throw new RuntimeException("wrong data type, name=" + name)
@@ -985,18 +984,18 @@ object TypeSafe {
     }
 
 
-    def llocalDateTime(name: String, format: String, body: HashMapStringAny):ArrayBuffer[java.time.LocalDateTime] = {
-        val value = body.getOrElse(name,null)
+    def llocalDateTime(name: String, format: String, body: HashMapStringAny): ArrayBuffer[java.time.LocalDateTime] = {
+        val value = body.getOrElse(name, null)
         if (value == null) return null
         value match {
-            case abas : ArrayBuffer[_] =>
-                abas.map(aba => anyToLocaDateTime(aba,format))
+            case abas: ArrayBuffer[_] =>
+                abas.map(aba => anyToLocaDateTime(aba, format))
             case _ =>
                 throw new RuntimeException("wrong data type, name=" + name)
         }
     }
 
-    def nlLocalDateTime(name: String, format: String, body: HashMapStringAny):ArrayBuffer[java.time.LocalDateTime] = {
+    def nlLocalDateTime(name: String, format: String, body: HashMapStringAny): ArrayBuffer[java.time.LocalDateTime] = {
         val l = llocalDateTime(name, format, body)
         if (l == null) return new ArrayBuffer()
         l
@@ -1140,10 +1139,10 @@ object TypeSafe {
 
     def anyToLocaDateTime(value: Any, format: String = "yyyy-MM-dd HH:mm:ss"): java.time.LocalDateTime = {
         if (value == null) return null
-        val  formatter = DateTimeFormatter.ofPattern(format)
-        try{
-            LocalDateTime.parse(value.asInstanceOf[String],formatter)
-        }catch {
+        val formatter = DateTimeFormatter.ofPattern(format)
+        try {
+            LocalDateTime.parse(value.asInstanceOf[String], formatter)
+        } catch {
             case e: Exception => null
         }
     }
