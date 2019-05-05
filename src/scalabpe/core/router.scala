@@ -571,11 +571,6 @@ class Router(val rootDir: String, val startSos: Boolean = true, var mockMode: Bo
 
         log.info("router started")
 
-        val actors = actorMap.iterator
-        while (actors.hasNext){
-            val actor = actors.next()
-            log.info("actor details: key="+actor._1+" value="+actor._2.getClass)
-        }
     }
 
     def refresh() {
