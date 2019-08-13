@@ -1,26 +1,13 @@
 package scalabpe.plugin
 
-import java.io.FileOutputStream
-import java.io.OutputStreamWriter
-import java.io.PrintWriter
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.SQLException
-import java.sql.Statement
-import java.sql.Types
-
-import scala.collection.mutable.ArrayBuffer
-
-import org.apache.commons.dbcp.BasicDataSource
+import java.io.{FileOutputStream, OutputStreamWriter, PrintWriter}
+import java.sql._
 
 import javax.sql.DataSource
-import scalabpe.core.ArrayBufferAny
-import scalabpe.core.ArrayBufferMap
-import scalabpe.core.ArrayBufferString
-import scalabpe.core.HashMapStringAny
-import scalabpe.core.Logging
-import scalabpe.core.ResultCodes
+import org.apache.commons.dbcp.BasicDataSource
+import scalabpe.core._
+
+import scala.collection.mutable.ArrayBuffer
 
 class LocalFile(val filename: String) {
 
@@ -50,11 +37,16 @@ class LocalFile(val filename: String) {
             writer.println(line)
         } catch {
             case e: Throwable =>
-                try { if (writer != null) writer.close(); } catch { case e: Throwable => }
+                try {
+                    if (writer != null) writer.close();
+                } catch {
+                    case e: Throwable =>
+                }
                 writer = null
         }
     }
 }
+
 object ColumnType {
 
     val COLUMNTYPE_STRING = 1
@@ -64,12 +56,12 @@ object ColumnType {
 
     def toColumnType(s: String): Int = {
         s.toLowerCase() match {
-            case "string"    => COLUMNTYPE_STRING
-            case "number"    => COLUMNTYPE_NUMBER
-            case "date"      => COLUMNTYPE_DATE
-            case "datetime"  => COLUMNTYPE_DATETIME
+            case "string" => COLUMNTYPE_STRING
+            case "number" => COLUMNTYPE_NUMBER
+            case "date" => COLUMNTYPE_DATE
+            case "datetime" => COLUMNTYPE_DATETIME
             case "timestamp" => COLUMNTYPE_DATETIME
-            case _           => COLUMNTYPE_STRING
+            case _ => COLUMNTYPE_STRING
         }
     }
 
@@ -80,15 +72,16 @@ object DbResults {
 }
 
 class DbResults(
-        val rowCount: Int,
-        val results: ArrayBuffer[ArrayBufferAny],
-        val sqlCode: Int = 0) {
+                       val rowCount: Int,
+                       val results: ArrayBuffer[ArrayBufferAny],
+                       val sqlCode: Int = 0) {
 
     var insert_ids: ArrayBufferString = null
 
     def this(rowCount: Int) {
         this(rowCount, DbResults.emptyResults, 0)
     }
+
     def this(rowCount: Int, sqlCode: Int) {
         this(rowCount, DbResults.emptyResults, sqlCode)
     }
@@ -172,13 +165,15 @@ object DbLike extends Logging {
         if (url.indexOf("oracle") >= 0) return "oracle"
         if (url.indexOf("mysql") >= 0) return "mysql"
         if (url.indexOf("sqlserver") >= 0) return "sqlserver"
+        if (url.indexOf("impala") >= 0) return "impala"
+        if (url.indexOf("mariadb") >= 0) return "mariadb"
         ""
     }
 
     def getUrl(ds: DataSource): String = {
         ds match {
             case t: BasicDataSource => t.getUrl()
-            case _                  => ""
+            case _ => ""
         }
     }
 
@@ -223,7 +218,9 @@ class DbLike extends Logging {
     }
 
     @native def decryptDes(s: String): String;
+
     @native def decryptDesX(s: String): String;
+
     @native def decryptRsa(s: String): String;
 
     def parseDbConnStr(s: String): DbConnStr = {
@@ -241,18 +238,31 @@ class DbLike extends Logging {
 
         var clsName: String = null
         var isMysql: Boolean = false
+        var isImpala: Boolean = false
         if (jdbcString.indexOf("oracle") >= 0) {
             clsName = "oracle.jdbc.driver.OracleDriver"
             isMysql = false
+            isImpala = false
         } else if (jdbcString.indexOf("mysql") >= 0) {
             clsName = "com.mysql.jdbc.Driver"
             isMysql = true
+            isImpala = false
         } else if (jdbcString.indexOf("jtds") >= 0) {
             clsName = "net.sourceforge.jtds.jdbc.Driver"
             isMysql = false
+            isImpala = false
         } else if (jdbcString.indexOf("sqlserver") >= 0) {
             clsName = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
             isMysql = false
+            isImpala = false
+        } else if (jdbcString.indexOf("impala") >= 0) {
+            clsName = "com.cloudera.impala.jdbc41.Driver"
+            isMysql = false
+            isImpala = true
+        } else if (jdbcString.indexOf("mariadb") >= 0) {
+            clsName = "org.mariadb.jdbc.Driver"
+            isMysql = false
+            isImpala = false
         }
 
         val ds = new BasicDataSource
@@ -270,6 +280,16 @@ class DbLike extends Logging {
             ds.setValidationQuery("select now()")
             ds.setTestWhileIdle(true)
             ds.setTimeBetweenEvictionRunsMillis(300000)
+            ds.setMinEvictableIdleTimeMillis(5 * 60 * 1000L)
+            var testNum = connNum / 2
+            if (testNum < 1) testNum = 1
+            ds.setNumTestsPerEvictionRun(testNum)
+        }
+
+        if (isImpala) {
+            ds.setValidationQuery("select 1")
+            ds.setTestWhileIdle(true)
+            ds.setTimeBetweenEvictionRunsMillis(30000)
             ds.setMinEvictableIdleTimeMillis(5 * 60 * 1000L)
             var testNum = connNum / 2
             if (testNum < 1) testNum = 1
@@ -294,6 +314,12 @@ class DbLike extends Logging {
                     return result.rowCount == -1
                 case "sqlserver" =>
                     val result = query_db("select getdate()", null, null, ds)
+                    return result.rowCount == -1
+                case "impala" =>
+                    val result = query_db("select now()", null, null, ds)
+                    return result.rowCount == -1
+                case "mariadb" =>
+                    val result = query_db("select now()", null, null, ds)
                     return result.rowCount == -1
                 case _ => false
             }
@@ -888,8 +914,16 @@ class DbLike extends Logging {
                 if (mode == DbLike.MODE_SYNC) {
                     mustRollback()
                 } else {
-                    try { conn.rollback() } catch { case e: Throwable => log.error("rollback error") };
-                    try { conn.setAutoCommit(true) } catch { case e: Throwable => log.error("set autocommit error") };
+                    try {
+                        conn.rollback()
+                    } catch {
+                        case e: Throwable => log.error("rollback error")
+                    };
+                    try {
+                        conn.setAutoCommit(true)
+                    } catch {
+                        case e: Throwable => log.error("set autocommit error")
+                    }
                 }
 
             }
@@ -990,8 +1024,16 @@ class DbLike extends Logging {
                 if (mode == DbLike.MODE_SYNC) {
                     mustRollback()
                 } else {
-                    try { conn.rollback() } catch { case e: Throwable => log.error("rollback error") };
-                    try { conn.setAutoCommit(true) } catch { case e: Throwable => log.error("set autocommit error") };
+                    try {
+                        conn.rollback()
+                    } catch {
+                        case e: Throwable => log.error("rollback error")
+                    };
+                    try {
+                        conn.setAutoCommit(true)
+                    } catch {
+                        case e: Throwable => log.error("set autocommit error")
+                    }
                 }
 
             }
@@ -1236,6 +1278,8 @@ object ErrorCodeUtils extends Logging {
     val mysqlErrorCodeReg = """^.*ERROR ([0-9]+):.*$""".r
     val sqlserverErrorCodeReg1 = """^.*错误([0-9]+):.*$""".r
     val sqlserverErrorCodeReg2 = """^.*error([0-9]+):.*$""".r
+    val impalaErrorCodeReg = """^.*E ([0-9]+):.*$""".r
+    val mariadbErrorCodeReg = """^.*ERROR ([0-9]+):.*$""".r
 
     val timeoutReg1 = """^.*Timeout waiting for idle object.*$""".r
     val connReg1 = """^.*Cannot create PoolableConnectionFactory.*$""".r
@@ -1249,6 +1293,8 @@ object ErrorCodeUtils extends Logging {
     val oracleConnectionErrorCodes = scala.Array(1012, 1017, 28, 1092, 1093, 1094, 2134, 3113, 3114, 1090, 1034, 12505, 12560, 17002, 17447, 1683, 1653)
     val mysqlConnectionErrorCodes = scala.Array(1045, 1)
     val sqlserverConnectionErrorCodes = scala.Array(4060)
+    val impalaConnectionErrorCodes = scala.Array(531, 602)
+    val mariadbConnectionErrorCodes = scala.Array(1045, 1)
 
     def mergeLines(ss: String): String = {
         var sss = ss.replace("\n\r", " ").replace("\r", " ").replace("\n", " ")
@@ -1291,6 +1337,11 @@ object ErrorCodeUtils extends Logging {
                 return errorCode.toInt
             case sqlserverErrorCodeReg2(errorCode) =>
                 return errorCode.toInt
+            case impalaErrorCodeReg(errorCode) =>
+                return errorCode.toInt
+            case mariadbErrorCodeReg(errorCode) =>
+                return errorCode.toInt
+
             case _ =>
                 return unknown_sql_errorcode
         }
@@ -1299,7 +1350,7 @@ object ErrorCodeUtils extends Logging {
     def sqlCodeToErrorCode(ds: DataSource, sqlCode: Int): Int = {
 
         val dbType = DbLike.getDbType(ds)
-        val codes = if (dbType == "oracle") oracleConnectionErrorCodes else if (dbType == "sqlserver") sqlserverConnectionErrorCodes else mysqlConnectionErrorCodes
+        val codes = if (dbType == "oracle") oracleConnectionErrorCodes else if (dbType == "sqlserver") sqlserverConnectionErrorCodes else if (dbType == "impala") impalaConnectionErrorCodes else if (dbType == "mariadb") mariadbConnectionErrorCodes else mysqlConnectionErrorCodes
 
         if (sqlCode == timeout_errorcode) return ResultCodes.DB_TIMEOUT
         if (sqlCode == connect_errorcode) return ResultCodes.DB_CONN_FAILED
