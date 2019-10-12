@@ -37,9 +37,9 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def bd(name: String): BigDecimal = TypeSafe.bd(name, this)
 
-    def date(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date): java.util.Date = TypeSafe.date(name, this, format, defaultValue)
+    def date(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: java.util.Date = null): java.util.Date = TypeSafe.date(name, this, format, defaultValue)
 
-    def localdatetime(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime): LocalDateTime = TypeSafe.localtimedate(name, this, format, defaultValue)
+    def localdatetime(name: String, format: String = "yyyy-MM-dd HH:mm:ss", defaultValue: LocalDateTime = null): LocalDateTime = TypeSafe.localtimedate(name, this, format, defaultValue)
 
     def m(name: String): HashMapStringAny = TypeSafe.m(name, this)
 
@@ -63,9 +63,9 @@ class HashMapStringAny extends HashMap[String, Any] {
 
     def nlbd(name: String): ArrayBuffer[BigDecimal] = TypeSafe.nlbd(name, this)
 
-    def nldate(name: String, format: String): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, format, this)
+    def nldate(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.util.Date] = TypeSafe.nldate(name, format, this)
 
-    def nlLocaDateTime(name: String, format: String): ArrayBuffer[java.time.LocalDateTime] = TypeSafe.nlLocalDateTime(name, format, this)
+    def nlLocaDateTime(name: String, format: String = "yyyy-MM-dd HH:mm:ss"): ArrayBuffer[java.time.LocalDateTime] = TypeSafe.nlLocalDateTime(name, format, this)
 
     def lm(name: String): ArrayBufferMap = TypeSafe.lm(name, this)
 
